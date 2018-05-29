@@ -21,6 +21,8 @@
 # define OPP filler->opp_sign
 # define MAP filler->map
 # define PIECE filler->piece
+# define P_POS_Y filler->p_pos_y
+# define P_POS_X filler->p_pos_x
 
 
 typedef struct		s_fill
@@ -34,10 +36,10 @@ typedef struct		s_fill
 	int				**piece;
 	int				**map;
 	int				dist_sum;
-
+	int				p_pos_y;
+	int				p_pos_x;
 	int				put_y;
 	int				put_x;
-
 }					t_fill;
 
 #include "./libft/libft.h"

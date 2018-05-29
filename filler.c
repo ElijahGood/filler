@@ -43,9 +43,21 @@ static void	init_struct(t_fill	*filler)
 
 	P_Y = 0;
 	P_X = 0;
+	P_POS_Y = 0;
+	P_POS_X = 0;
 	filler->put_y = 0;
 	filler->put_x = 0;
 	filler->dist_sum = 0;
+}
+
+static void		get_pos_piece(t_fill *filler, int i, int j)
+{
+	if (P_POS_Y == 0)
+		P_POS_Y = i;
+	if (P_POS_X == 0)
+		P_POS_X = j;
+	else if (j < P_POS_X)
+		P_POS_X = j;
 }
 
 static void		get_piece(t_fill *filler, char *line)
@@ -55,7 +67,8 @@ static void		get_piece(t_fill *filler, char *line)
 
 	i = 0;
 	P_Y = ft_atoi(&line[6]);
-	P_X = ft_atoi(&line[8]);
+	P_X = ft_atoi(ft_strchr(&line[6], ' ') + 1);
+	// dprintf(3, "\nP_Y= %d, P_X= %d\n", P_Y, P_X);
 	PIECE = (int **)malloc(sizeof(int *) * (P_Y + 1));
 	free(line);
 	while (i < P_Y)
@@ -66,21 +79,21 @@ static void		get_piece(t_fill *filler, char *line)
 		get_next_line(0, &line);
 		while (++j < P_X)
 		{
-			if (line[j] == '.')
+			if (line[j] == '.')//mb move this lines to get_pos_piece ?
 				PIECE[i][j] = 0;
 			else if (line[j] == '*')
+			{	
 				PIECE[i][j] = 1;
+				get_pos_piece(filler, i, j);
+			}
 		}
 		PIECE[i][j] = '\0';
 		free(line);
 		i++;
 	}
 	PIECE[i] = NULL;
+	dprintf(3, "\nP_POS_Y= %d, P_POS_X= %d\n", P_POS_Y, P_POS_X);
 }
-// static void		get_plateau(t_fill *filler, char *line)
-// {
-
-// }
 
 static void		magic(t_fill *filler, int i, int j, int k)
 {
@@ -93,7 +106,6 @@ static void		magic(t_fill *filler, int i, int j, int k)
 		MAP[i + 1][j] = k;
 	if (j < (M_X - 1) && MAP[i][j + 1] == 0)
 		MAP[i][j + 1] = k;
-	//test mb its too much
 	if (i < (M_Y - 1) && j < (M_X - 1) && MAP[i + 1][j + 1] == 0) 
 		MAP[i + 1][j + 1] = k;
 	if (i > 0 && j > 0 && MAP[i - 1][j - 1] == 0)
@@ -214,7 +226,7 @@ static void	save_piece(t_fill *filler)
 // 	return (1);
 // }
 
-static void		check_piece_place(t_fill *filler, int y, int x)
+static void		check_piece_place(t_fill *filler, int y, int x)//fix that fuck, cus its fucking crushing, we cant count from -y and -x, try to decrem it after placing piece!!!
 {	
 	int		i;
 	int		j;
@@ -222,14 +234,14 @@ static void		check_piece_place(t_fill *filler, int y, int x)
 	int		sum;
 
 	sum = 0;
-	i = 0;
+	i = P_POS_Y;//was =0
 	match = 0;
 	while (i < P_Y)
 	{
-		j = 0;
+		j = P_POS_X; //was =0
 		while (j < P_X)
 		{
-			if (MAP[y + i][x + j] != -2 && MAP[y + i][x + j] != -1)
+			if (MAP[y + i][x + j] != -2 && MAP[y + i][x + j] != -1 && y >= 0 && x >= 0)
 				sum += MAP[y + i][x + j];
 			if (PIECE[i][j] == 1 && MAP[y + i][x + j] == -2
 				&& MAP[y + i][x + j] != 'X' && MAP[y + i][x + j] != 'x') 
@@ -253,11 +265,11 @@ static void 	place_piece(t_fill *filler)
 	int		y;
 	int		x;
 
-	y = -1;
-	while (++y <= (M_Y - P_Y))
+	y = -1 - P_POS_Y;
+	while (++y <= (M_Y - P_Y + P_POS_Y))
 	{
-		x = -1;
-		while (++x <= (M_X - P_X))
+		x = -1 - P_POS_X;
+		while (++x <= (M_X - P_X + P_POS_X))
 		{
 			check_piece_place(filler, y, x);
 		}
@@ -305,12 +317,14 @@ int main(void)
 			// save_plateau(&filler);
 			// save_piece(&filler);
 			place_piece(&filler);
-			// dprintf(3, "puts: y= %d, x= %d\n", filler.put_y, filler.put_x);
+			dprintf(3, "puts: y= %d, x= %d\n", filler.put_y, filler.put_x);
 			ft_printf("%d %d\n", filler.put_y, filler.put_x);
 			free_map_piece(&filler);
 			filler.put_y = 0;
 			filler.put_x = 0;
 			filler.dist_sum = 0;
+			filler.p_pos_y = 0; //P_POS_Y
+			filler.p_pos_x = 0; //P_POS_X
 		}
 		// dprintf(3, "main while %s\n", line);
 		// dprintf(3, "main while %p\n", (void *)line);
