@@ -43,21 +43,27 @@ static void	init_struct(t_fill	*filler)
 
 	P_Y = 0;
 	P_X = 0;
-	P_POS_Y = 0;
-	P_POS_X = 0;
+	P_POS_Y = -1;
+	P_POS_X = -1;
 	filler->put_y = 0;
 	filler->put_x = 0;
 	filler->dist_sum = 0;
 }
 
-static void		get_pos_piece(t_fill *filler, int i, int j)
+static void		get_pos_piece(t_fill *filler, int i, int j, char *line)
 {
-	if (P_POS_Y == 0)
-		P_POS_Y = i;
-	if (P_POS_X == 0)
-		P_POS_X = j;
-	else if (j < P_POS_X)
-		P_POS_X = j;
+	if (line[j] == '.')
+		PIECE[i][j] = 0;
+	else if (line[j] == '*')
+	{	
+		PIECE[i][j] = 1;
+		if (P_POS_Y == -1)
+			P_POS_Y = i;
+		if (P_POS_X == -1)
+			P_POS_X = j;
+		else if (j < P_POS_X)
+			P_POS_X = j;
+	}
 }
 
 static void		get_piece(t_fill *filler, char *line)
@@ -65,34 +71,23 @@ static void		get_piece(t_fill *filler, char *line)
 	int j;
 	int i;
 
-	i = 0;
 	P_Y = ft_atoi(&line[6]);
 	P_X = ft_atoi(ft_strchr(&line[6], ' ') + 1);
-	// dprintf(3, "\nP_Y= %d, P_X= %d\n", P_Y, P_X);
 	PIECE = (int **)malloc(sizeof(int *) * (P_Y + 1));
 	free(line);
-	while (i < P_Y)
+	i = -1;
+	while (++i < P_Y)
 	{
 		j = -1;
 		PIECE[i] = (int *)malloc(sizeof(int) * (P_X + 1));
 		ft_bzero(PIECE[i], P_X + 1);
 		get_next_line(0, &line);
 		while (++j < P_X)
-		{
-			if (line[j] == '.')//mb move this lines to get_pos_piece ?
-				PIECE[i][j] = 0;
-			else if (line[j] == '*')
-			{	
-				PIECE[i][j] = 1;
-				get_pos_piece(filler, i, j);
-			}
-		}
+			get_pos_piece(filler, i, j, line);
 		PIECE[i][j] = '\0';
 		free(line);
-		i++;
 	}
 	PIECE[i] = NULL;
-	dprintf(3, "\nP_POS_Y= %d, P_POS_X= %d\n", P_POS_Y, P_POS_X);
 }
 
 static void		magic(t_fill *filler, int i, int j, int k)
@@ -226,7 +221,7 @@ static void	save_piece(t_fill *filler)
 // 	return (1);
 // }
 
-static void		check_piece_place(t_fill *filler, int y, int x)//fix that fuck, cus its fucking crushing, we cant count from -y and -x, try to decrem it after placing piece!!!
+static void		check_piece_place(t_fill *filler, int y, int x)
 {	
 	int		i;
 	int		j;
@@ -234,29 +229,26 @@ static void		check_piece_place(t_fill *filler, int y, int x)//fix that fuck, cus
 	int		sum;
 
 	sum = 0;
-	i = P_POS_Y;//was =0
 	match = 0;
-	while (i < P_Y)
+	i = P_POS_Y - 1;//was =0
+	while (++i < P_Y)
 	{
-		j = P_POS_X; //was =0
-		while (j < P_X)
+		j = P_POS_X - 1; //was =0
+		while (++j < P_X)
 		{
-			if (MAP[y + i][x + j] != -2 && MAP[y + i][x + j] != -1 && y >= 0 && x >= 0)
-				sum += MAP[y + i][x + j];
-			if (PIECE[i][j] == 1 && MAP[y + i][x + j] == -2
-				&& MAP[y + i][x + j] != 'X' && MAP[y + i][x + j] != 'x') 
+			if ((M_COR != -2) && (M_COR != -1) && y >= 0 && x >= 0)
+				sum += M_COR;
+			if (PIECE[i][j] == 1 && M_COR == -2 && M_COR != 'X' && M_COR != 'x')
 				match++;
-			if ((PIECE[i][j] == 1 && MAP[y + i][x + j] == -1) || match > 1)
+			if ((PIECE[i][j] == 1 && M_COR == -1) || match > 1)
 				return ;
-			j++;
 		}
-		i++;
 	}
-	if (match == 1 && (sum < filler->dist_sum || filler->dist_sum == 0))//fix that fuck!
+	if (match == 1 && (sum < filler->dist_sum || filler->dist_sum == 0))
 	{
 		filler->dist_sum = sum;
-		filler->put_x = x;
-		filler->put_y = y;
+		filler->put_x = x - P_POS_X;
+		filler->put_y = y - P_POS_Y;
 	}
 }
 
@@ -265,15 +257,27 @@ static void 	place_piece(t_fill *filler)
 	int		y;
 	int		x;
 
+	y = -1;
+	while (++y <= (M_Y - P_Y))
+	{
+		x = -1;
+		while (++x <= (M_X - P_X))
+		{
+			check_piece_place(filler, y, x);
+		}
+	}
+	/*
 	y = -1 - P_POS_Y;
 	while (++y <= (M_Y - P_Y + P_POS_Y))
 	{
 		x = -1 - P_POS_X;
 		while (++x <= (M_X - P_X + P_POS_X))
 		{
+					// dprintf(3, "place_piece: %p\n", (void *)MAP[]);
 			check_piece_place(filler, y, x);
 		}
 	}
+	*/
 }
 
 static void	free_map_piece(t_fill *filler)
@@ -304,6 +308,7 @@ int main(void)
 	/* O or X figure out -- first line parsing */
 	line = NULL;
 	get_sign_and_size(&filler, line);
+	dprintf(3, "\nPLA= %c, OPP= %c", filler.player_sign, filler.opp_sign);
 	while (get_next_line(0, &line) > 0)
 	{
 		if (ft_strstr(line, "0123456789"))
@@ -323,8 +328,8 @@ int main(void)
 			filler.put_y = 0;
 			filler.put_x = 0;
 			filler.dist_sum = 0;
-			filler.p_pos_y = 0; //P_POS_Y
-			filler.p_pos_x = 0; //P_POS_X
+			filler.p_pos_y = -1; //P_POS_Y
+			filler.p_pos_x = -1; //P_POS_X
 		}
 		// dprintf(3, "main while %s\n", line);
 		// dprintf(3, "main while %p\n", (void *)line);

@@ -23,7 +23,7 @@
 # define PIECE filler->piece
 # define P_POS_Y filler->p_pos_y
 # define P_POS_X filler->p_pos_x
-
+# define M_COR MAP[y + i - P_POS_Y][x + j - P_POS_X]
 
 typedef struct		s_fill
 {
