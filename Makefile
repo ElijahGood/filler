@@ -9,27 +9,27 @@
 #    Updated: 2018/05/20 15:54:38 by inazarin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
 NAME = inazarin.filler
 
 SRCS = filler.c \
-		
+		plateau_handle.c \
+		piece_handle.c
 
 OBJ =	$(SRCS:%.c=%.o)
 
-FLAGS = -g -Wall -Wextra -Werror
+FLAGS = -Wall -Wextra -Werror
 
 HEADER = filler.h
 
 all: $(NAME)
 
 %.o:%.c
-	gcc -I. $(FLAGS)  -c $< -o $@ 
+	gcc -I. $(FLAGS)  -c $< -o $@
 
 $(NAME): $(OBJ) $(HEADER)
 	make -C libft
-	cp ./libft/libft.a ./$(NAME)
-	ar rc $(NAME) $(OBJ)
-	ranlib $(NAME)
+	gcc -g $(FLAGS) $(OBJ) libft/libft.a -o $(NAME) -fsanitize=address
 
 clean:
 	make clean -C libft/

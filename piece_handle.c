@@ -17,19 +17,14 @@ static void		write_ret_nums(t_fill *filler, int sum, int y, int x)
 	filler->dist_sum = sum;
 	filler->put_x = x - P_POS_X;
 	filler->put_y = y - P_POS_Y;
-	dprintf(3, "PUTS: %d, %d, sum= %d\n", filler->put_y, filler->put_x, filler->dist_sum);
+	// dprintf(3, "PUTS: %d, %d, sum= %d\n", filler->put_y, filler->put_x, filler->dist_sum);
 }
 
-
-static void		check_piece_place(t_fill *filler, int y, int x)
+static void		check_piece_place(t_fill *filler, int y, int x, int sum)
 {
 	int			i;
 	int			j;
-	int			match;
-	int			sum;
 
-	sum = 0;
-	match = 0;
 	i = P_POS_Y - 1;
 	while (++i < P_Y)
 	{
@@ -38,79 +33,32 @@ static void		check_piece_place(t_fill *filler, int y, int x)
 		{
 			if ((M_COR != -2) && (M_COR != -1) && y >= 0 && x >= 0)
 				sum += M_COR;
-			if (PIECE[i][j] == 1 && M_COR == -2 && M_COR != 'X' && M_COR != 'x')
-				match++;
-			if ((PIECE[i][j] == 1 && M_COR == -1) || match > 1)
+			if (PIECE[i][j] == 1 && M_COR == -2)
+				filler->match++;
+			if ((PIECE[i][j] == 1 && M_COR == -1) || filler->match > 1)
 				return ;
 		}
 	}
-	if (match == 1 && (sum < filler->dist_sum || filler->dist_sum == 0))
+	if (filler->match == 1 && (sum < filler->dist_sum || filler->dist_sum == 0))
 		write_ret_nums(filler, sum, y, x);
-}
-
-
-static void		write_ret_nums2(t_fill *filler, int sum, int y, int x)
-{
-	filler->dist_sum = sum;
-	filler->put_x = x;
-	filler->put_y = y;
-	dprintf(3, "PUTS: %d, %d, sum= %d\n", filler->put_y, filler->put_x, filler->dist_sum);
-}
-
-//# define M_COR MAP[y + i - P_POS_Y][x + j - P_POS_X]
-// # define M_ROC MAP[y - i + P_MAX_Y][x - j + P_MAX_X]
-static void		check_piece_place2(t_fill *filler, int y, int x)
-{
-	int			i;
-	int			j;
-	int			match;
-	int			sum;
-
-// dprintf(3, "CHECK: y= %d, x= %d\n", y, x);
-	sum = 0;
-	match = 0;
-	i = P_POS_Y - 1;//mb smth wrong with them + it dosnt go forward first match!!!
-	while (++i <= P_MAX_Y)
-	{
-		j = P_POS_X - 1;
-		while (++j <= P_MAX_X)
-		{
-			// dprintf(3, "MAP[y.x.]= %d,%d\n", y - i + P_MAX_Y, x - j + P_MAX_X);
-			if ((M_ROC != -2) && (M_ROC != -1) && y >= 0 && x >= 0)
-				sum += M_ROC;
-			if (PIECE[i][j] == 1 && M_ROC == -2)
-				match++;
-			if ((PIECE[i][j] == 1 && M_ROC == -1) || match > 1)
-				return ;
-		}
-	}
-	if (match == 1 && (sum < filler->dist_sum || filler->dist_sum == 0))
-		write_ret_nums2(filler, sum, y, x);
 }
 
 static void		place_piece(t_fill *filler)
 {
 	int			y;
 	int			x;
+	// int			sum;
 
-	if ((PLA == 'X' && M_Y < 40) || (PLA == 'O' && M_Y > 40))
+	// sum = 0;
+	y = -1;
+	while (++y <= (M_Y - P_Y))
 	{
-		y = M_Y - P_MAX_Y;
-		while (--y >= 0)
+		x = -1;
+		while (++x <= (M_X - P_X))
 		{
-			x = M_X - P_MAX_X;
-			while (--x >= 0)
-				check_piece_place2(filler, y, x);
-		}
-	}
-	else
-	{
-		y = -1;
-		while (++y <= (M_Y - P_Y))
-		{
-			x = -1;
-			while (++x <= (M_X - P_X))
-				check_piece_place(filler, y, x);
+			filler->high = -1;
+			filler->match = 0;
+			check_piece_place(filler, y, x, 0);
 		}
 	}
 }
@@ -134,6 +82,7 @@ static void		get_pos_piece(t_fill *filler, int i, int j, char *line)
 			P_MAX_X = j;
 	}
 }
+/*
 static void	save_plateau(t_fill *filler)
 {
 	int 	i = 0;
@@ -150,14 +99,16 @@ static void	save_plateau(t_fill *filler)
 		dprintf(3, "\n");
 		i++;
 	}
-}
+		dprintf(3, "\nhighest_pos_opp= %d, highest_pos_pla= %d\n", filler->highest_pos_opp, filler->highest_pos_pla);
 
+}
+*/
 void			get_piece(t_fill *filler, char *line)
 {
 	int			j;
 	int			i;
 
-	save_plateau(filler);
+	// save_plateau(filler);
 
 	P_Y = ft_atoi(&line[6]);
 	P_X = ft_atoi(ft_strchr(&line[6], ' ') + 1);
@@ -176,7 +127,7 @@ void			get_piece(t_fill *filler, char *line)
 		free(line);
 	}
 	PIECE[i] = NULL;
-	dprintf(3, "P_MAX_Y: %d, P_MAX_X: %d\n", P_MAX_Y, P_MAX_X);
+	// dprintf(3, "P_MAX_Y: %d, P_MAX_X: %d\n", P_MAX_Y, P_MAX_X);
 	place_piece(filler);
 
 }
